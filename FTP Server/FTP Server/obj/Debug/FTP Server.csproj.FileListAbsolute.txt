@@ -1,1 +1,6 @@
 D:\лабы\КСиС\FTP Server\FTP Server\FTP Server\bin\Debug\FTP Server.exe.config
+D:\лабы\КСиС\FTP Server\FTP Server\FTP Server\obj\Debug\FTP Server.csprojResolveAssemblyReference.cache
+D:\лабы\КСиС\FTP Server\FTP Server\FTP Server\bin\Debug\FTP Server.exe
+D:\лабы\КСиС\FTP Server\FTP Server\FTP Server\bin\Debug\FTP Server.pdb
+D:\лабы\КСиС\FTP Server\FTP Server\FTP Server\obj\Debug\FTP Server.exe
+D:\лабы\КСиС\FTP Server\FTP Server\FTP Server\obj\Debug\FTP Server.pdb
