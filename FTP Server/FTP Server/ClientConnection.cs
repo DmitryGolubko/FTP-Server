@@ -15,7 +15,7 @@ namespace FTP_Server
         private NetworkStream stream;
         private StreamReader reader;
         private StreamWriter writer;
-        private string connectedClientusername;
+        private CommandDictionary commandDictionary = new CommandDictionary();
 
         public ClientConnection(TcpClient client)
         {
@@ -27,7 +27,7 @@ namespace FTP_Server
 
         public void HandleClient(object obj)
         {
-            writer.WriteLine("220 Service Ready.");
+            writer.WriteLine("220 SERVICE READY.");
             writer.Flush();
 
             string line;
@@ -41,29 +41,17 @@ namespace FTP_Server
                     string[] command = line.Split(' ');
                     string cmd = command[0].ToUpper();
                     string arguments = command.Length > 1 ? line.Substring(command[0].Length + 1) : null;
-                    
+                    Command currentCommand;
                     if (response == null)
                     {
-                        switch (cmd)
+                        if (commandDictionary.ContainsKey(cmd))
                         {
-                            case "USER":
-                                response = User(arguments);
-                                break;
-                            case "PASS":
-                                response = Password(arguments);
-                                break;
-                            case "CWD":
-                                response = ChangeWorkingDirectory(arguments);
-                                break;
-                            case "PWD":
-                                response = "257 \"/\" is current directory.";
-                                break;
-                            case "QUIT":
-                                response = "221 Service closing control connection";
-                                break;
-                            default:
-                                response = "502 Command not supported";
-                                break;
+                            commandDictionary.TryGetValue(cmd, out currentCommand);
+                            response = currentCommand.Execute(arguments);
+                        }
+                        else
+                        {
+                            response = "502 COMMAND NOT SUPPORTED";
                         }
                     }
                     
@@ -89,27 +77,14 @@ namespace FTP_Server
             }
         }
 
-        private string User(string username)
+
+        public void Dispose()
         {
-            connectedClientusername = username;
-            return "331 User name ok, need password.";
+            connectedClient.Close();
+            stream.Close();
+            reader.Close();
+            writer.Close();
         }
 
-        private string ChangeWorkingDirectory(string pathname)
-        {
-            return "250 Changed to new directory";
-        }
-
-        private string Password(string password)
-        {
-            if (true)
-            {
-                return "230 User logged in";
-            }
-            else
-            {
-                return "530 Not logged in";
-            }
-        }
     }
 }
