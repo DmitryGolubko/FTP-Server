@@ -8,6 +8,6 @@ namespace FTP_Server
 {
     abstract class Command
     {
-        public abstract string Execute(string arguments);
+        public abstract string Execute(string arguments, ClientConnection connection);
     }
 }

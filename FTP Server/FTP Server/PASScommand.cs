@@ -8,10 +8,11 @@ namespace FTP_Server
 {
     class PASScommand : Command
     {
-        public override string Execute(string arguments)
+        public override string Execute(string arguments, ClientConnection connection)
         {
             if (true)
             {
+                connection.currentDirectory = connection.root;
                 return "230 ACCESS GRANTED";
             }
             else

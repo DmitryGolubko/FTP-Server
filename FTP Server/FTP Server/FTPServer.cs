@@ -16,6 +16,7 @@ namespace FTP_Server
         private TcpListener listener;
         private IPEndPoint localEndPoint;
         private List<ClientConnection> activeConnections;
+        public ClientConnection connection;
 
         public FTPServer() : this(IPAddress.Any, COMMAND_PORT)
         {
@@ -38,11 +39,11 @@ namespace FTP_Server
             Console.WriteLine("FTP Server is started on IP: {0}", IP);
         }
 
-        private void HandleAcceptTcpClient(IAsyncResult result)
+        public void HandleAcceptTcpClient(IAsyncResult result)
         {
             listener.BeginAcceptTcpClient(HandleAcceptTcpClient, listener);
             TcpClient client = listener.EndAcceptTcpClient(result);
-            var connection = new ClientConnection(client);
+            connection = new ClientConnection(client);
             activeConnections.Add(connection);
             ThreadPool.QueueUserWorkItem(connection.HandleClient, client);
         }

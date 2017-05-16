@@ -46,11 +46,18 @@
     <Compile Include="ClientConnection.cs" />
     <Compile Include="Command.cs" />
     <Compile Include="CommandDictionary.cs" />
+    <Compile Include="CWDcommand.cs" />
     <Compile Include="FTPServer.cs" />
+    <Compile Include="LISTcommand.cs" />
     <Compile Include="PASScommand.cs" />
+    <Compile Include="PASVcommand.cs" />
+    <Compile Include="PORTcommand.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="PWDcommand.cs" />
+    <Compile Include="RETRcommand.cs" />
     <Compile Include="SYSTcommand.cs" />
+    <Compile Include="TYPEcommand.cs" />
     <Compile Include="USERcommand.cs" />
   </ItemGroup>
   <ItemGroup>

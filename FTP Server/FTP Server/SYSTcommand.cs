@@ -8,7 +8,7 @@ namespace FTP_Server
 {
     class SYSTcommand : Command
     {
-        public override string Execute(string arguments)
+        public override string Execute(string arguments, ClientConnection connection)
         {
             return "215 WINDOWS-NT-10";
         }

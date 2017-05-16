@@ -11,18 +11,224 @@ namespace FTP_Server
 {
     class ClientConnection
     {
-        private TcpClient connectedClient;
+        public class DataConnectionOperation
+        {
+            public Func<NetworkStream, string, string> Operation { get; set; }
+            public string Arguments { get; set; }
+        }
+
+        public enum TransferType
+        {
+            Ascii,
+            Ebcdic,
+            Image,
+            Local,
+        }
+
+        public enum DataConnectionType
+        {
+            Passive,
+            Active,
+        }
+
+        public TcpListener passiveListener;
+
+        public TcpClient connectedControlClient;
+        private TcpClient dataClient;
+
         private NetworkStream stream;
         private StreamReader reader;
         private StreamWriter writer;
         private CommandDictionary commandDictionary = new CommandDictionary();
 
+        public string connectedClientusername;
+        public string root = "D:\\FTPfiles";
+        public string currentDirectory;
+        public TransferType connectionType = TransferType.Ascii;
+
+        public DataConnectionType dataConnectionType = DataConnectionType.Active;
+        public IPEndPoint dataEndpoint;
+
         public ClientConnection(TcpClient client)
         {
-            connectedClient = client;
-            stream = connectedClient.GetStream();
+            connectedControlClient = client;
+            stream = connectedControlClient.GetStream();
             reader = new StreamReader(stream);
             writer = new StreamWriter(stream);
+        }
+
+        public bool IsPathValid(string path)
+        {
+            return path.StartsWith(root);
+        }
+
+        public string NormalizeFilename(string path)
+        {
+            if (path == null)
+            {
+                path = string.Empty;
+            }
+
+            if (path == "/")
+            {
+                return root;
+            }
+            else if (path.StartsWith("/"))
+            {
+                path = new FileInfo(Path.Combine(root, path.Substring(1))).FullName;
+            }
+            else
+            {
+                path = new FileInfo(Path.Combine(currentDirectory, path)).FullName;
+            }
+
+            return IsPathValid(path) ? path : null;
+        }
+
+        private static long CopyStream(Stream input, Stream output, int bufferSize)
+        {
+            byte[] buffer = new byte[bufferSize];
+            int count = 0;
+            long total = 0;
+
+            while ((count = input.Read(buffer, 0, buffer.Length)) > 0)
+            {
+                output.Write(buffer, 0, count);
+                total += count;
+            }
+
+            return total;
+        }
+
+        private static long CopyStreamAscii(Stream input, Stream output, int bufferSize)
+        {
+            char[] buffer = new char[bufferSize];
+            int count = 0;
+            long total = 0;
+
+            using (StreamReader rdr = new StreamReader(input, Encoding.ASCII))
+            {
+                using (StreamWriter wtr = new StreamWriter(output, Encoding.ASCII))
+                {
+                    while ((count = rdr.Read(buffer, 0, buffer.Length)) > 0)
+                    {
+                        wtr.Write(buffer, 0, count);
+                        total += count;
+                    }
+                }
+            }
+
+            return total;
+        }
+
+        private long CopyStream(Stream input, Stream output)
+        {
+            Stream limitedStream = output;
+
+            if (connectionType == TransferType.Image)
+            {
+                return CopyStream(input, limitedStream, 4096);
+            }
+            else
+            {
+                return CopyStreamAscii(input, limitedStream, 4096);
+            }
+        }
+
+        public string ListOperation(NetworkStream dataStream, string pathname)
+        {
+            StreamWriter dataWriter = new StreamWriter(dataStream, Encoding.ASCII);
+
+            IEnumerable<string> directories = Directory.EnumerateDirectories(pathname);
+
+            foreach (string dir in directories)
+            {
+                DirectoryInfo d = new DirectoryInfo(dir);
+
+                string date = d.LastWriteTime < DateTime.Now - TimeSpan.FromDays(180) ?
+                    d.LastWriteTime.ToString("M dd yyyy"):
+                    d.LastWriteTime.ToString("M dd HH:mm");
+
+                string line = string.Format("drwxr-xr-x 1 owner group {0,8} {1} {2}", "4096", date, d.Name);
+
+                dataWriter.WriteLine(line);
+                dataWriter.Flush();
+            }
+
+            IEnumerable<string> files = Directory.EnumerateFiles(pathname);
+
+            foreach (string file in files)
+            {
+                FileInfo f = new FileInfo(file);
+
+                string date = f.LastWriteTime < DateTime.Now - TimeSpan.FromDays(180) ?
+                    f.LastWriteTime.ToString("M dd yyyy") :
+                    f.LastWriteTime.ToString("M dd HH:mm");
+
+                string line = string.Format("-rw-r--r-- 1 owner group {0,8} {1} {2}", f.Length, date, f.Name); ;
+
+                dataWriter.WriteLine(line);
+                dataWriter.Flush();
+            }
+
+            return "226 Transfer complete";
+        }
+
+        public string RetrieveOperation(NetworkStream dataStream, string pathname)
+        {
+            long bytes = 0;
+
+            using (FileStream fs = new FileStream(pathname, FileMode.Open, FileAccess.Read))
+            {
+                bytes = CopyStream(fs, dataStream);
+            }
+
+            return "226 Closing data connection, file transfer successful";
+        }
+
+        private void HandleAsyncResult(IAsyncResult result)
+        {
+            if (dataConnectionType == DataConnectionType.Active)
+            {
+                dataClient.EndConnect(result);
+            }
+            else
+            {
+                dataClient = passiveListener.EndAcceptTcpClient(result);
+            }
+        }
+
+        public void SetupDataConnectionOperation(DataConnectionOperation state)
+        {
+            if (dataConnectionType == DataConnectionType.Active)
+            {
+                dataClient = new TcpClient(dataEndpoint.AddressFamily);
+                dataClient.BeginConnect(dataEndpoint.Address, dataEndpoint.Port, DoDataConnectionOperation, state);
+            }
+            else
+            {
+                passiveListener.BeginAcceptTcpClient(DoDataConnectionOperation, state);
+            }
+        }
+
+        private void DoDataConnectionOperation(IAsyncResult result)
+        {
+            HandleAsyncResult(result);
+
+            DataConnectionOperation op = result.AsyncState as DataConnectionOperation;
+
+            string response;
+
+            using (NetworkStream dataStream = dataClient.GetStream())
+            {
+                response = op.Operation(dataStream, op.Arguments);
+            }
+
+            dataClient.Close();
+            dataClient = null;
+
+            writer.WriteLine(response);
+            writer.Flush();
         }
 
         public void HandleClient(object obj)
@@ -47,7 +253,7 @@ namespace FTP_Server
                         if (commandDictionary.ContainsKey(cmd))
                         {
                             commandDictionary.TryGetValue(cmd, out currentCommand);
-                            response = currentCommand.Execute(arguments);
+                            response = currentCommand.Execute(arguments, this);
                         }
                         else
                         {
@@ -55,7 +261,7 @@ namespace FTP_Server
                         }
                     }
                     
-                    if (connectedClient == null || !connectedClient.Connected)
+                    if (connectedControlClient == null || !connectedControlClient.Connected)
                     {
                         break;
                     }
@@ -80,7 +286,7 @@ namespace FTP_Server
 
         public void Dispose()
         {
-            connectedClient.Close();
+            connectedControlClient.Close();
             stream.Close();
             reader.Close();
             writer.Close();

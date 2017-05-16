@@ -13,6 +13,13 @@ namespace FTP_Server
             Add("USER", new USERcommand());
             Add("PASS", new PASScommand());
             Add("SYST", new SYSTcommand());
+            Add("PWD", new PWDcommand());
+            Add("TYPE", new TYPEcommand());
+            Add("PORT", new PORTcommand());
+            Add("LIST", new LISTcommand());
+            Add("PASV", new PASVcommand());
+            Add("CWD", new CWDcommand());
+            Add("RETR", new RETRcommand());
         }
     }
 }
