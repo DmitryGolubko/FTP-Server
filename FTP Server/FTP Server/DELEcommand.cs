@@ -7,7 +7,7 @@ using System.IO;
 
 namespace FTP_Server
 {
-    class STORcommand : Command
+    class DELEcommand : Command
     {
         public override string Execute(string pathname, ClientConnection connection)
         {
@@ -19,13 +19,15 @@ namespace FTP_Server
                 {
                     File.Delete(pathname);
                 }
-                var state = new ClientConnection.DataConnectionOperation { Arguments = pathname, Operation = connection.StoreOperation };
+                else
+                {
+                    return "550 File Not Found";
+                }
 
-                connection.SetupDataConnectionOperation(state);
-
-                return string.Format("150 Opening {0} mode data transfer for STOR", connection.dataConnectionType);
+                return "250 Requested file action okay, completed";
             }
-            return "450 Requested file action not taken";
+
+            return "550 File Not Found";
         }
     }
 }

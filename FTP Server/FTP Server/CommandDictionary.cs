@@ -21,6 +21,7 @@ namespace FTP_Server
             Add("CWD", new CWDcommand());
             Add("RETR", new RETRcommand());
             Add("STOR", new STORcommand());
+            Add("DELE", new DELEcommand());
         }
     }
 }

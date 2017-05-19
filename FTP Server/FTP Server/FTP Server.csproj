@@ -47,6 +47,7 @@
     <Compile Include="Command.cs" />
     <Compile Include="CommandDictionary.cs" />
     <Compile Include="CWDcommand.cs" />
+    <Compile Include="DELEcommand.cs" />
     <Compile Include="FTPServer.cs" />
     <Compile Include="LISTcommand.cs" />
     <Compile Include="PASScommand.cs" />
