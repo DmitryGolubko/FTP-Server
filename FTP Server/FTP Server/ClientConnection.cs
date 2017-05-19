@@ -186,6 +186,18 @@ namespace FTP_Server
             return "226 Closing data connection, file transfer successful";
         }
 
+        public string StoreOperation(NetworkStream dataStream, string pathname)
+        {
+            long bytes = 0;
+
+            using (FileStream fs = new FileStream(pathname, FileMode.OpenOrCreate, FileAccess.Write, FileShare.None, 4096, FileOptions.SequentialScan))
+            {
+                bytes = CopyStream(dataStream, fs);
+            }
+
+            return "226 Closing data connection, file transfer successful";
+        }
+
         private void HandleAsyncResult(IAsyncResult result)
         {
             if (dataConnectionType == DataConnectionType.Active)

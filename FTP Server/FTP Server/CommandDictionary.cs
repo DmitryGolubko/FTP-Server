@@ -20,6 +20,7 @@ namespace FTP_Server
             Add("PASV", new PASVcommand());
             Add("CWD", new CWDcommand());
             Add("RETR", new RETRcommand());
+            Add("STOR", new STORcommand());
         }
     }
 }
