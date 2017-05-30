@@ -24,6 +24,8 @@ namespace FTP_Server
             Add("DELE", new DELEcommand());
             Add("RNFR", new RNFRcommand());
             Add("RNTO", new RNTOcommand());
+            Add("RMD", new RMDcommand());
+            Add("MKD", new MKDcommand());
         }
     }
 }
