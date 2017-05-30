@@ -22,6 +22,8 @@ namespace FTP_Server
             Add("RETR", new RETRcommand());
             Add("STOR", new STORcommand());
             Add("DELE", new DELEcommand());
+            Add("RNFR", new RNFRcommand());
+            Add("RNTO", new RNTOcommand());
         }
     }
 }

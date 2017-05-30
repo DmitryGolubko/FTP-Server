@@ -44,6 +44,7 @@ namespace FTP_Server
         public string connectedClientusername;
         public string root = "D:\\FTPfiles";
         public string currentDirectory;
+        public string renameFrom = null;
         public TransferType connectionType = TransferType.Ascii;
 
         public DataConnectionType dataConnectionType = DataConnectionType.Active;
@@ -255,7 +256,7 @@ namespace FTP_Server
                 while(!string.IsNullOrEmpty(line = reader.ReadLine()))
                 {
                     string response = null;
-
+                    //renameFrom = null;
                     string[] command = line.Split(' ');
                     string cmd = command[0].ToUpper();
                     string arguments = command.Length > 1 ? line.Substring(command[0].Length + 1) : null;
