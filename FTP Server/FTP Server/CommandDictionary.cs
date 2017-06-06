@@ -26,6 +26,8 @@ namespace FTP_Server
             Add("RNTO", new RNTOcommand());
             Add("RMD", new RMDcommand());
             Add("MKD", new MKDcommand());
+            Add("QUIT", new QUITcommand());
+            Add("NOOP", new NOOPcommand());
         }
     }
 }

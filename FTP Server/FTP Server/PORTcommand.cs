@@ -28,7 +28,10 @@ namespace FTP_Server
                 port[i - 4] = Convert.ToByte(ipAndPort[i]);
             }
 
-            connection.dataEndpoint = new IPEndPoint(new IPAddress(ipAddress), (int)(BitConverter.ToInt16(port, 0)));
+            if (BitConverter.IsLittleEndian)
+                Array.Reverse(port);
+            int intport = BitConverter.ToUInt16(port, 0);
+            connection.dataEndpoint = new IPEndPoint(new IPAddress(ipAddress), BitConverter.ToUInt16(port, 0));
 
             return "200 Data Connection Established";
         }

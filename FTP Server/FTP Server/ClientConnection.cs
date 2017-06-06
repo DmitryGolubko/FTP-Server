@@ -47,6 +47,10 @@ namespace FTP_Server
         public string renameFrom = null;
         public TransferType connectionType = TransferType.Ascii;
 
+        //public bool authorized = false;
+        public User currentUser;
+        private List<string> validCommands;
+
         public DataConnectionType dataConnectionType = DataConnectionType.Active;
         public IPEndPoint dataEndpoint;
 
@@ -56,6 +60,17 @@ namespace FTP_Server
             stream = connectedControlClient.GetStream();
             reader = new StreamReader(stream);
             writer = new StreamWriter(stream);
+            validCommands = new List<string>();
+        }
+
+        private string CheckUser()
+        {
+            if (currentUser == null)
+            {
+                return "530 Not logged in";
+            }
+
+            return null;
         }
 
         public bool IsPathValid(string path)
@@ -107,9 +122,9 @@ namespace FTP_Server
             int count = 0;
             long total = 0;
 
-            using (StreamReader rdr = new StreamReader(input, Encoding.ASCII))
+            using (StreamReader rdr = new StreamReader(input, Encoding.Default))
             {
-                using (StreamWriter wtr = new StreamWriter(output, Encoding.ASCII))
+                using (StreamWriter wtr = new StreamWriter(output, Encoding.Default))
                 {
                     while ((count = rdr.Read(buffer, 0, buffer.Length)) > 0)
                     {
@@ -138,7 +153,7 @@ namespace FTP_Server
 
         public string ListOperation(NetworkStream dataStream, string pathname)
         {
-            StreamWriter dataWriter = new StreamWriter(dataStream, Encoding.ASCII);
+            StreamWriter dataWriter = new StreamWriter(dataStream, Encoding.Default);
 
             IEnumerable<string> directories = Directory.EnumerateDirectories(pathname);
 
@@ -249,6 +264,8 @@ namespace FTP_Server
             writer.WriteLine("220 SERVICE READY.");
             writer.Flush();
 
+            validCommands.AddRange(new string[] {"USER", "PASS", "QUIT", "CWD", "PORT", "PASV", "TYPE", "RETR", "LIST", "PWD", "NOOP"});
+
             string line;
 
             try
@@ -260,6 +277,12 @@ namespace FTP_Server
                     string cmd = command[0].ToUpper();
                     string arguments = command.Length > 1 ? line.Substring(command[0].Length + 1) : null;
                     Command currentCommand;
+
+                    if (!validCommands.Contains(cmd))
+                    {
+                        response = CheckUser();
+                    } 
+
                     if (response == null)
                     {
                         if (commandDictionary.ContainsKey(cmd))

@@ -8,16 +8,19 @@ namespace FTP_Server
 {
     class PASScommand : Command
     {
-        public override string Execute(string arguments, ClientConnection connection)
+        public override string Execute(string password, ClientConnection connection)
         {
-            if (true)
+            connection.currentUser = UserStore.Validate(connection.connectedClientusername, password);
+            connection.currentDirectory = connection.root;
+
+            if (connection.currentUser != null)
             {
-                connection.currentDirectory = connection.root;
+                
                 return "230 ACCESS GRANTED";
             }
             else
             {
-                return "530 ACCESS DENIED";
+                return "230 ANONYMOUS ACCESS GRANTED";
             }
         }     
     }
